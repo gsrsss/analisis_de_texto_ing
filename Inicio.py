@@ -11,25 +11,25 @@ st.set_page_config(page_title="TF-IDF Demo", layout="wide", initial_sidebar_stat
 # --- CSS Styles Removed ---
 
 # --- Title and Description ---
-st.title("TF-IDF Demo: Question & Answer 🤖")
+st.title("TF-IDF Demo: Question & Answer")
 
 st.write("""
 Each line is treated as a **document** (it can be a sentence, a paragraph, or a longer text).  
-⚠️ Documents and questions must be in **English**, as the analysis is configured for that language.  
+Documents and questions must be in **English**, as the analysis is configured for that language. ✧˖°  
 
 The application applies normalization and *stemming* so that words like *playing* and *play* are considered equivalent.
 """)
 
 # --- User Inputs ---
-st.header("📝 Enter your data")
+st.header("Enter your data 🪶─ .✦📜⊹₊ ݁.")
 
 # Initial example in English
 text_input = st.text_area(
-    "Enter your documents (one per line, in English):",
+    "Enter your documents (one per line):",
     "The dog barks loudly.\nThe cat meows at night.\nThe dog and the cat play together."
 )
 
-question = st.text_input("Enter a question (in English):", "Who is playing?")
+question = st.text_input("Enter a question", "Who is playing?")
 
 # --- Processing Functions ---
 # Initialize stemmer for English
