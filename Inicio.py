@@ -5,173 +5,121 @@ import pandas as pd
 import re
 from nltk.stem import SnowballStemmer
 
-# --- Configuración de la Página ---
-st.set_page_config(page_title="Demo TF-IDF", layout="wide", initial_sidebar_state="collapsed")
+# --- Page Config ---
+st.set_page_config(page_title="TF-IDF Demo", layout="wide", initial_sidebar_state="collapsed")
 
-# --- Estilos CSS ---
-st.markdown("""
-<style>
-/* Contenedor para introducción y entradas */
-.container-box {
-    background-color: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
+# --- CSS Styles Removed ---
 
-/* Contenedor para la respuesta destacada */
-.highlight-box {
-    background-color: #e6f7ff; /* Azul claro */
-    border: 1px solid #b3e0ff; /* Borde azul */
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-.highlight-box h3 {
-    color: #0056b3; /* Azul oscuro */
-    border-bottom: 2px solid #b3e0ff;
-    padding-bottom: 5px;
-}
+# --- Title and Description ---
+st.title("TF-IDF Demo: Question & Answer 🤖")
 
-/* Contenedor para otros resultados */
-.results-box {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 25px;
-    margin-bottom: 20px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
-# --- Título y Descripción ---
-st.title("Demo de TF-IDF con Preguntas y Respuestas 🤖")
-
-st.markdown('<div class="container-box">', unsafe_allow_html=True)
 st.write("""
-Cada línea se trata como un **documento** (puede ser una frase, un párrafo o un texto más largo).  
-⚠️ Los documentos y las preguntas deben estar en **inglés**, ya que el análisis está configurado para ese idioma.  
+Each line is treated as a **document** (it can be a sentence, a paragraph, or a longer text).  
+⚠️ Documents and questions must be in **English**, as the analysis is configured for that language.  
 
-La aplicación aplica normalización y *stemming* para que palabras como *playing* y *play* se consideren equivalentes.
+The application applies normalization and *stemming* so that words like *playing* and *play* are considered equivalent.
 """)
-st.markdown('</div>', unsafe_allow_html=True)
 
+# --- User Inputs ---
+st.header("📝 Enter your data")
 
-# --- Entradas de Usuario ---
-st.markdown('<div class="container-box">', unsafe_allow_html=True)
-st.header("📝 Ingresa tus datos")
-
-# Ejemplo inicial en inglés
+# Initial example in English
 text_input = st.text_area(
-    "Escribe tus documentos (uno por línea, en inglés):",
+    "Enter your documents (one per line, in English):",
     "The dog barks loudly.\nThe cat meows at night.\nThe dog and the cat play together."
 )
 
-question = st.text_input("Escribe una pregunta (en inglés):", "Who is playing?")
-st.markdown('</div>', unsafe_allow_html=True)
+question = st.text_input("Enter a question (in English):", "Who is playing?")
 
-
-# --- Funciones de Procesamiento ---
-# Inicializar stemmer para inglés
+# --- Processing Functions ---
+# Initialize stemmer for English
 stemmer = SnowballStemmer("english")
 
 def tokenize_and_stem(text: str):
-    # Pasar a minúsculas
+    # Convert to lowercase
     text = text.lower()
-    # Eliminar caracteres no alfabéticos
+    # Remove non-alphabetic characters
     text = re.sub(r'[^a-z\s]', ' ', text)
-    # Tokenizar (palabras con longitud > 1)
+    # Tokenize (words with length > 1)
     tokens = [t for t in text.split() if len(t) > 1]
-    # Aplicar stemming
+    # Apply stemming
     stems = [stemmer.stem(t) for t in tokens]
     return stems
 
-# --- Lógica Principal y Resultados ---
-if st.button("Calcular TF-IDF y buscar respuesta", type="primary", use_container_width=True):
+# --- Main Logic and Results ---
+if st.button("Calculate TF-IDF and find answer", type="primary", use_container_width=True):
     documents = [d.strip() for d in text_input.split("\n") if d.strip()]
     
     if len(documents) < 1:
-        st.warning("⚠️ Ingresa al menos un documento.")
+        st.warning("⚠️ Please enter at least one document.")
     else:
-        st.header("📊 Resultados del Análisis")
+        st.header("📊 Analysis Results")
         try:
-            # Vectorizador con stemming
+            # Vectorizer with stemming
             vectorizer = TfidfVectorizer(
                 tokenizer=tokenize_and_stem,
                 stop_words="english",
                 token_pattern=None
             )
 
-            # Ajustar con documentos
+            # Fit with documents
             X = vectorizer.fit_transform(documents)
 
-            # --- Respuesta Principal (Destacada) ---
+            # --- Main Answer (Highlighted) ---
             
-            # Vector de la pregunta
+            # Question vector
             question_vec = vectorizer.transform([question])
 
-            # Similitud coseno
+            # Cosine similarity
             similarities = cosine_similarity(question_vec, X).flatten()
 
-            # Documento más parecido
+            # Most similar document
             best_idx = similarities.argmax()
             best_doc = documents[best_idx]
             best_score = similarities[best_idx]
 
-            st.markdown('<div class="highlight-box">', unsafe_allow_html=True)
-            st.write("### 🎯 Respuesta Más Relevante")
-            st.write(f"**Tu pregunta:** {question}")
-            st.write(f"**Documento más relevante (Doc {best_idx+1}):**")
+            st.write("### 🎯 Most Relevant Answer")
+            st.write(f"**Your question:** {question}")
+            st.write(f"**Most relevant document (Doc {best_idx+1}):**")
             st.info(f"{best_doc}")
-            st.write(f"**Puntaje de similitud:** {best_score:.3f}")
+            st.write(f"**Similarity score:** {best_score:.3f}")
             
-            # Mostrar coincidencias de stems
+            # Show matching stems
             vocab = vectorizer.get_feature_names_out()
             q_stems = tokenize_and_stem(question)
             matched = [s for s in q_stems if s in vocab and X[best_idx].toarray()[0][vectorizer.vocabulary_[s]] > 0]
-            st.write("**Stems coincidentes:**", f"`{', '.join(matched) or 'Ninguno'}`")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.write("**Matching stems:**", f"`{', '.join(matched) or 'None'}`")
             
-            
-            # --- Detalles Adicionales (en pestañas) ---
-            tab1, tab2 = st.tabs(["Todos los Puntajes", "Matriz TF-IDF"])
+            # --- Additional Details (in tabs) ---
+            tab1, tab2 = st.tabs(["All Scores", "TF-IDF Matrix"])
 
             with tab1:
-                # Mostrar todas las similitudes
-                st.markdown('<div class="results-box">', unsafe_allow_html=True)
-                st.write("### 📈 Puntajes de similitud (ordenados)")
+                # Show all similarities
+                st.write("### 📈 Similarity Scores (sorted)")
                 sim_df = pd.DataFrame({
-                    "Documento": [f"Doc {i+1}" for i in range(len(documents))],
-                    "Texto": documents,
-                    "Similitud": similarities
+                    "Document": [f"Doc {i+1}" for i in range(len(documents))],
+                    "Text": documents,
+                    "Similarity": similarities
                 })
-                st.dataframe(sim_df.sort_values("Similitud", ascending=False))
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.dataframe(sim_df.sort_values("Similarity", ascending=False))
 
             with tab2:
-                # Mostrar matriz TF-IDF
-                st.markdown('<div class="results-box">', unsafe_allow_html=True)
-                st.write("### 🔢 Matriz TF-IDF (stems)")
+                # Show TF-IDF matrix
+                st.write("### 🔢 TF-IDF Matrix (stems)")
                 df_tfidf = pd.DataFrame(
                     X.toarray(),
                     columns=vectorizer.get_feature_names_out(),
                     index=[f"Doc {i+1}" for i in range(len(documents))]
                 )
                 st.dataframe(df_tfidf.round(3))
-                st.markdown('</div>', unsafe_allow_html=True)
         
         except ValueError as e:
             if "empty vocabulary" in str(e):
-                st.error("⚠️ Error: No se pudo construir un vocabulario. Asegúrate de que los documentos no estén vacíos o compuestos solo de 'stop words' (palabras comunes en inglés).")
+                st.error("⚠️ Error: Could not build vocabulary. Make sure the documents are not empty or composed only of 'stop words' (common English words).")
             else:
-                st.error(f"Ocurrió un error: {e}")
+                st.error(f"An error occurred: {e}")
         except Exception as e:
-            st.error(f"Ocurrió un error inesperado: {e}")
-
-
+            st.error(f"An unexpected error occurred: {e}")
 
 
 
